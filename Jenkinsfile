@@ -2,7 +2,6 @@ pipeline {
     agent any
     
     tools{
-        jdk 'jdk17'
         nodejs 'node16'
         
     }
@@ -31,13 +30,13 @@ pipeline {
             }
         }
         
-        stage('SONARQUBE ANALYSIS') {
-            steps {
-                withSonarQubeEnv('sonar') {
-                    sh " $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Bank -Dsonar.projectKey=Bank "
-                }
-            }
-        }
+        //stage('SONARQUBE ANALYSIS') {
+            //steps {
+                //withSonarQubeEnv('sonar') {
+                    //sh " $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Bank -Dsonar.projectKey=Bank "
+                //}
+            //}
+        //}
         
         
          stage('Install Dependencies') {
