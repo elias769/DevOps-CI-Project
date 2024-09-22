@@ -3,11 +3,11 @@ pipeline {
 
     parameters {
         string(name: 'SONAR_HOST_URL', defaultValue: 'http://192.168.201.13:9000', description: 'SonarQube host URL')
-        string(name: 'SONAR_API_KEY', defaultValue: 'sonar_api_key', description: 'SonarQube API key')
+        string(name: 'SONAR_API_KEY', defaultValue: '', description: 'SonarQube API key')
     }
 
     tools {
-        nodejs 'node16' // Make sure Node.js 16 is installed on Jenkins
+        nodejs 'node16' // Ensure Node.js 16 is installed on Jenkins
     }
 
     environment {
@@ -18,6 +18,27 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh 'npm install'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonar') { // 'sonar' should match your SonarQube server configuration name in Jenkins
+                    sh '''
+                    $SCANNER_HOME/bin/sonar-scanner \
+                    -Dsonar.projectKey=Bank \
+                    -Dsonar.sources=. \
+                    -Dsonar.host.url=${SONAR_HOST_URL} \
+                    -Dsonar.login=${SONAR_API_KEY}
+                    '''
+                }
+            }
+        }
+
+        stage('OWASP Dependency Check') {
+            steps {
+                dependencyCheck additionalArguments: '--scan ./app/backend --disableYarnAudit --disableNodeAudit', odcInstallation: 'DC'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
         }
 
@@ -39,20 +60,6 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('sonar') { // 'sonar' should match your SonarQube server configuration name in Jenkins
-                    sh '''
-                    $SCANNER_HOME/bin/sonar-scanner \
-                    -Dsonar.projectKey=Bank \
-                    -Dsonar.sources=. \
-                    -Dsonar.host.url=${SONAR_HOST_URL} \
-                    -Dsonar.login=${SONAR_API_KEY}
-                    '''
-                }
-            }
-        }
-
         // Uncomment if you want to bring the containers down after tests
         /*
         stage('Stop Containers') {
@@ -68,6 +75,8 @@ pipeline {
             echo 'Cleaning up resources...'
             // Ensure containers are stopped regardless of build status
             sh 'npm run compose:down || true'
+            // Clean up the workspace
+            deleteDir() // Deletes the workspace directory
         }
     }
 }
