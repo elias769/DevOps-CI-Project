@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'node16' // Ensure Node.js is installed and configured as 'node16'
+        nodejs 'node16' // Make sure Node.js 16 is installed on Jenkins
     }
 
     stages {
@@ -12,9 +12,9 @@ pipeline {
             }
         }
 
-        stage('Run Unit Tests') {
+        stage('Start Containers') {
             steps {
-                sh 'npm run test'
+                sh 'npm run compose:up'
             }
         }
 
@@ -30,19 +30,21 @@ pipeline {
             }
         }
 
-        stage('Deploy using Docker Compose') {
-            steps {
-                sh 'npm run compose:up -d'
-            }
-        }
-
-        // Uncomment this stage if you want to stop the containers afterward
+        // Uncomment if you want to bring the containers down after tests
         /*
-        stage('Stop Docker Containers') {
+        stage('Stop Containers') {
             steps {
                 sh 'npm run compose:down'
             }
         }
         */
+    }
+
+    post {
+        always {
+            echo 'Cleaning up resources...'
+            // Ensure containers are stopped regardless of build status
+            sh 'npm run compose:down || true'
+        }
     }
 }
