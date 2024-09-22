@@ -3,7 +3,7 @@ pipeline {
 
     parameters {
         string(name: 'SONAR_HOST_URL', defaultValue: 'http://192.168.201.13:9000', description: 'SonarQube host URL')
-        string(name: 'SONAR_API_KEY', defaultValue: 'sonar_api_key', description: 'SonarQube API key')
+        string(name: 'SONAR_API_KEY_ID', defaultValue: 'sonar_api_key', description: 'SonarQube API key credentials ID')
     }
 
     tools {
@@ -23,14 +23,16 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonar') { // 'sonar' should match your SonarQube server configuration name in Jenkins
-                    sh '''
-                    $SCANNER_HOME/bin/sonar-scanner \
-                    -Dsonar.projectKey=Bank \
-                    -Dsonar.sources=. \
-                    -Dsonar.host.url=${SONAR_HOST_URL} \
-                    -Dsonar.login=${SONAR_API_KEY}
-                    '''
+                withCredentials([string(credentialsId: params.SONAR_API_KEY_ID, variable: 'SONAR_API_KEY')]) {
+                    withSonarQubeEnv('sonar') { // 'sonar' should match your SonarQube server configuration name in Jenkins
+                        sh """
+                        $SCANNER_HOME/bin/sonar-scanner \
+                        -Dsonar.projectKey=Bank \
+                        -Dsonar.sources=. \
+                        -Dsonar.host.url=${SONAR_HOST_URL} \
+                        -Dsonar.login=$SONAR_API_KEY
+                        """
+                    }
                 }
             }
         }
