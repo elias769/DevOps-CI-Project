@@ -2,70 +2,47 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'node16'
+        nodejs 'node16' // Ensure Node.js is installed and configured as 'node16'
     }
 
-    //environment {
-    //    SCANNER_HOME = tool 'sonar-scanner'
-   // }
-
     stages {
-        stage('Git Checkout') {
+        stage('Install Dependencies') {
             steps {
-                git branch: 'main', url: 'https://github.com/jaiswaladi246/fullstack-bank.git'
+                sh 'npm install'
             }
         }
 
-        stage('OWASP Dependency Check') {
+        stage('Run Unit Tests') {
             steps {
-                dependencyCheck additionalArguments: '--scan ./app/backend --disableYarnAudit --disableNodeAudit', odcInstallation: 'DC'
-                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                sh 'npm run test'
             }
         }
 
-        stage('Trivy File System Scan') {
+        stage('Run Integration Tests') {
             steps {
-                sh "trivy fs ."
+                sh 'npm run test:integration'
             }
         }
 
-        // Uncomment and update for SonarQube analysis if needed
+        stage('Run E2E Tests') {
+            steps {
+                sh 'npm run test:e2e'
+            }
+        }
+
+        stage('Deploy using Docker Compose') {
+            steps {
+                sh 'npm run compose:up -d'
+            }
+        }
+
+        // Uncomment this stage if you want to stop the containers afterward
         /*
-        stage('SonarQube Analysis') {
+        stage('Stop Docker Containers') {
             steps {
-                withSonarQubeEnv('sonar') {
-                    sh "$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Bank -Dsonar.projectKey=Bank"
-                }
+                sh 'npm run compose:down'
             }
         }
         */
-
-        stage('Install Dependencies') {
-            steps {
-                sh "npm install"
-            }
-        }
-
-        stage('Backend Setup') {
-            steps {
-                dir('app/backend') {
-                    sh "npm install"
-                }
-            }
-        }
-
-        stage('Frontend Setup') {
-            steps {
-                dir('app/frontend') {
-                    sh "npm install"
-                }
-            }
-        }
-
-        stage('Deploy to Container') {
-            steps {
-                sh "npm run compose:up -d"
-            }
-        }
     }
 }
