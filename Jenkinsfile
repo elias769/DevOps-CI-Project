@@ -3,7 +3,7 @@ pipeline {
 
     parameters {
         string(name: 'SONAR_HOST_URL', defaultValue: 'http://192.168.201.13:9000', description: 'SonarQube host URL')
-        string(name: 'SONAR_API_KEY', defaultValue: '', description: 'SonarQube API key')
+        string(name: 'SONAR_API_KEY', defaultValue: 'sonar_api_key', description: 'SonarQube API key')
     }
 
     tools {
